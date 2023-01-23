@@ -43,7 +43,6 @@ app = FastAPI()
 async def stop():
   df = pd.read_csv('./data/stops.txt', header=0)
   print(df.loc[0])
-  ngsi_stops = []
   try:
     for gtfs_stop in df.loc:
       # print (gtfs_stop)
@@ -60,12 +59,9 @@ async def stop():
       }
       ngsi_stop_json = json.dumps(ngsi_stop, cls=NpEncoder)
       # print("==",ngsi_stop_json)
-      ngsi_stops.append(ngsi_stop)
 
   except Exception as e:
     print(e)
-
-  data = json.dumps(ngsi_stops, cls=NpEncoder)
 
   orion_endpoint = os.getenv("ORION_ENDPOINT")
   auth = get_auth()
