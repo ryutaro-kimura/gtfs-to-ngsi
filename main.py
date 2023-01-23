@@ -42,7 +42,8 @@ app = FastAPI()
 @app.get("/stops")
 async def stop():
   df = pd.read_csv('./data/stops.txt', header=0)
-  print(df.loc[0])
+  # print(df.loc[0])
+  test = {}
   try:
     for gtfs_stop in df.loc:
       # print (gtfs_stop)
@@ -58,14 +59,28 @@ async def stop():
         "operateBy": ["urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id)]
       }
       ngsi_stop_json = json.dumps(ngsi_stop, cls=NpEncoder)
+
+      # １つだけPOSTしてみる
+      if(ngsi_stop["name"] == 4369):
+        test = ngsi_stop_json
+        print(test)
+        orion_endpoint = os.getenv("ORION_ENDPOINT")
+        auth = get_auth()
+        try:
+          requests.post(orion_endpoint + "/v2/entities", auth=auth, data=test)
+          print("OK-------------")
+        except Exception as e:
+           print('post exception：',e)
+      
       # print("==",ngsi_stop_json)
 
   except Exception as e:
-    print(e)
+    print("Error===",e)
 
-  orion_endpoint = os.getenv("ORION_ENDPOINT")
-  auth = get_auth()
-  response = requests.get(orion_endpoint + "/version", auth=auth)
-  print(json.dumps(response.json(), indent=2))
+  # orion_endpoint = os.getenv("ORION_ENDPOINT")
+  # auth = get_auth()
+  # response = requests.get(orion_endpoint + "/v2/entities", auth=auth)
+  response = requests.get(orion_endpoint + "/v2/entities?GtfsStop", auth=auth)
+  inOrion = json.dumps(response.json(), indent=2)
   
-  return {"name":"data"}
+  return {"name":inOrion}
