@@ -16,7 +16,7 @@ class NpEncoder(json.JSONEncoder):
 app = FastAPI()
 @app.get("/stops")
 async def stop():
-  df = pd.read_csv('./stops.txt', header=0)
+  df = pd.read_csv('./data/stops.txt', header=0)
   print(df.loc[0])
   ngsi_stops = []
   try:
@@ -38,7 +38,6 @@ async def stop():
       ngsi_stops.append(ngsi_stop)
 
   except Exception as e:
-    
     print(e)
 
   print(type(ngsi_stops))
