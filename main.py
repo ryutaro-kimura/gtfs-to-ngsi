@@ -42,40 +42,46 @@ app = FastAPI()
 
 @app.get("/stops")
 async def stop():
-    df = pd.read_csv('./data/stops.txt', header=0)
+    df = pd.read_csv("./data/stops.txt", header=0)
     # print(df.loc[0])
     test = {}
     try:
         for gtfs_stop in df.loc:
             # print (gtfs_stop)
             ngsi_stop = {
-                'id': "urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id),
+                "id": "urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id),
                 "type": "GtfsStop",
                 "code": "",
                 # "code": gtfs_stop.stop_code,
                 "name": gtfs_stop.name,
                 "location": {
                     "type": gtfs_stop.location_type,
-                    "coordinates": [gtfs_stop.stop_lat, gtfs_stop.stop_lon]
+                    "coordinates": [gtfs_stop.stop_lat, gtfs_stop.stop_lon],
                 },
-                "operateBy": ["urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id)]
+                "operateBy": [
+                    "urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id)
+                ],
             }
             ngsi_stop_json = json.dumps(ngsi_stop, cls=NpEncoder)
 
             # １つだけPOSTしてみる
-            if (ngsi_stop["name"] == 4369):
+            if ngsi_stop["name"] == 4369:
                 test = ngsi_stop_json
                 print("test=====", test)  # ここは出力されてる
                 orion_endpoint = os.getenv("ORION_ENDPOINT")
                 auth = get_auth()
                 try:
-                    req = requests.post(orion_endpoint + "/v2/entities?options=keyValues",
-                                        auth=auth, data=test, headers={'content-type': 'application/json'})
+                    req = requests.post(
+                        orion_endpoint + "/v2/entities?options=keyValues",
+                        auth=auth,
+                        data=test,
+                        headers={"content-type": "application/json"},
+                    )
                     print("req===", req)
                     print("req.json=====", req.json())
                     print("OK-------------")
                 except Exception as e:
-                    print('post exception：', e)
+                    print("post exception：", e)
 
             # print("==",ngsi_stop_json)
 
@@ -86,7 +92,8 @@ async def stop():
     # auth = get_auth()
     # response = requests.get(orion_endpoint + "/v2/entities", auth=auth)
     response = requests.get(
-        orion_endpoint + "/v2/entities?type=GtfsStop", auth=auth)
+        orion_endpoint + "/v2/entities?type=GtfsStop", auth=auth
+    )
     inOrion = json.dumps(response.json(), indent=2)
 
     return {"name": inOrion}
