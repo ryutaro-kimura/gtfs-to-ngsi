@@ -52,16 +52,12 @@ class GtfsStopTuple(NamedTuple):
 @app.get("/stops")
 async def stop():
     df = pd.read_csv("./data/stops.txt", header=0)
-    # print(df.loc[0])
-    test = {}
-    print(df.iloc[0])
+    # print(df.iloc[0])
     try:
         for gtfs_stop in df.loc:
             ngsi_stop: GtfsStopTuple = {
                 "id": "urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id),
                 "type": "GtfsStop",
-                "code": "",
-                # "code": gtfs_stop.stop_code,
                 "name": gtfs_stop.stop_name,
                 "location": {
                     "type": gtfs_stop.location_type,
@@ -72,38 +68,25 @@ async def stop():
                 ],
             }
             ngsi_stop_json = json.dumps(ngsi_stop, cls=NpEncoder)
-
-            # １つだけPOSTしてみる
-            if ngsi_stop["id"] == "urn:ngsi-ld:GtfsStop:1001002-01":
-                test = ngsi_stop
-                print("OK")
-            #     orion_endpoint = os.getenv("ORION_ENDPOINT")
-            #     auth = get_auth()
-            #     try:
-            #         req = requests.post(
-            #             orion_endpoint + "/v2/entities?options=keyValues",
-            #             auth=auth,
-            #             data=test,
-            #             headers={"content-type": "application/json"},
-            #         )
-            #         print("req===", req)
-            #         print("req.json=====", req.json())
-            #         print("OK-------------")
-            #     except Exception as e:
-            #         print("post exception：", e)
-
-            # print("==",ngsi_stop_json)
+            print(ngsi_stop_json)
+            try:
+                orion_endpoint = os.getenv("ORION_ENDPOINT")
+                auth = get_auth()
+                requests.post(
+                    orion_endpoint + "/v2/entities?options=keyValues",
+                    auth=auth,
+                    data=ngsi_stop_json,
+                    headers={"content-type": "application/json"},
+                )
+            except Exception as e:
+                print("post exception：", e)
 
     except Exception as e:
         print("Error===", e)
-    print("test=====", test)  # ここは出力されてる
-    orion_endpoint = os.getenv("ORION_ENDPOINT")
-    auth = get_auth()
-    # response = requests.get(orion_endpoint + "/v2/entities", auth=auth)
     response = requests.get(
         orion_endpoint + "/v2/entities?type=GtfsStop&option=keyValue",
         auth=auth,
     )
     inOrion = json.dumps(response.json(), indent=2)
 
-    return {"name": inOrion}
+    return {"json": inOrion}
