@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 from pycognito.utils import RequestsSrpAuth
 from requests.auth import AuthBase
 
+import sys
+
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
@@ -49,6 +51,10 @@ class GtfsStopTuple(NamedTuple):
     operateBy: list
 
 
+orion_endpoint = os.getenv("ORION_ENDPOINT")
+auth = get_auth()
+
+
 @app.get("/stops")
 async def stop():
     df = pd.read_csv("./data/stops.txt", header=0)
@@ -58,20 +64,21 @@ async def stop():
             ngsi_stop: GtfsStopTuple = {
                 "id": "urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id),
                 "type": "GtfsStop",
+                "code": "",
                 "name": gtfs_stop.stop_name,
                 "location": {
                     "type": gtfs_stop.location_type,
-                    "coordinates": [gtfs_stop.stop_lat, gtfs_stop.stop_lon],
+                    "coordinates": [
+                        gtfs_stop.stop_lat,
+                        gtfs_stop.stop_lon,
+                    ],
                 },
                 "operateBy": [
                     "urn:ngsi-ld:GtfsStop:{}".format(gtfs_stop.stop_id)
                 ],
             }
-            ngsi_stop_json = json.dumps(ngsi_stop, cls=NpEncoder)
-            print(ngsi_stop_json)
+            ngsi_stop_json = json.dumps(ngsi_stop, cls=NpEncoder, indent=8)
             try:
-                orion_endpoint = os.getenv("ORION_ENDPOINT")
-                auth = get_auth()
                 requests.post(
                     orion_endpoint + "/v2/entities?options=keyValues",
                     auth=auth,
@@ -79,14 +86,18 @@ async def stop():
                     headers={"content-type": "application/json"},
                 )
             except Exception as e:
-                print("post exception：", e)
+                print("post exception😇", e)
 
     except Exception as e:
-        print("Error===", e)
+        print("Error🔴", e)
+
+
+@app.get("/orion")
+async def get_orion():
     response = requests.get(
-        orion_endpoint + "/v2/entities?type=GtfsStop&option=keyValue",
+        orion_endpoint + "/v2/entities?type=GtfsStop&options=keyValues",
         auth=auth,
     )
-    inOrion = json.dumps(response.json(), indent=2)
+    data = response.json()
 
-    return {"json": inOrion}
+    return data
